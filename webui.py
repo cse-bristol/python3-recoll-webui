@@ -134,6 +134,7 @@ def get_config():
     for d in config['dirs']:
         name = 'mount_%s' % urllib.parse.quote(d,'')
         config['mounts'][d] = select([bottle.request.get_cookie(name), DEFAULTS['mounts'].get(d), 'file://%s' % d], [None, ''])
+    print('config =', config)
     return config
 #}}}
 #{{{ get_dirs
@@ -169,6 +170,7 @@ def query_to_recoll_string(q):
         qs += " date:%s/%s" % (q['after'], q['before'])
     if q['dir'] != '<all>':
         qs += " dir:\"%s\" " % q['dir']
+    print('q ->', q, qs)
     return qs
 #}}}
 #{{{ recoll_initsearch
@@ -181,7 +183,8 @@ def recoll_initsearch(q):
     try:
         qs = query_to_recoll_string(q)
         query.execute(qs, config['stem'], config['stemlang'])
-    except:
+    except Exception as e:
+        print('exc in query', e)
         pass
     return query
 #}}}
@@ -214,16 +217,22 @@ def recoll_search(q, dosnippets=True):
             query.next = offset
         else:
             query.scroll(offset, mode='absolute')
-
+    print('rows', query.rowcount)
     highlighter = HlMeths()
     for i in range(config['perpage']):
         try:
             doc = query.fetchone()
+            print('got doc')
         except:
+            print('got to end')
             break
         d = {}
         for f in FIELDS:
-            v = getattr(doc, f)
+            try:
+                v = getattr(doc, f)
+            except:
+                print('exc getting',f,'in',doc)
+                v = None
             if v is not None:
                 d[f] = v.encode('utf-8')
             else:
