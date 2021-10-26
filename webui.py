@@ -236,9 +236,9 @@ def recoll_search(q, dosnippets=True):
             if v is not None:
                 d[f] = v.encode('utf-8')
             else:
-                d[f] = ''
+                d[f] = ''.encode('utf-8')
         d['label'] = select([d['title'], d['filename'], '?'], [None, ''])
-        d['sha'] = hashlib.sha1((d['url']+d['ipath']).encode('utf-8')).hexdigest()
+        d['sha'] = hashlib.sha1(d['url']+d['ipath']).hexdigest()
         d['time'] = timestr(d['mtime'], config['timefmt'])
         if dosnippets:
             d['snippet'] = query.makedocabstract(doc, highlighter).encode('utf-8')
