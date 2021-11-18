@@ -28,6 +28,11 @@ try:
     from recoll import rclconfig
 except:
     import rclconfig
+
+def log(s):
+    print(s, file=sys.stderr)
+    sys.stderr.flush()
+    
 #}}}
 #{{{ settings
 # settings defaults
@@ -42,6 +47,7 @@ DEFAULTS = {
     'csvfields': 'filename title author size time mtype url',
     'title_link': 'download',
     'mounts': {
+        '/s' : 'file:///S:/'
         # Override default links for directories.
         # Useful for rewriting links to access the files on a server.
         # If not specified, the url will be dir path prefixed with 'file://'.
@@ -134,7 +140,6 @@ def get_config():
     for d in config['dirs']:
         name = 'mount_%s' % urllib.parse.quote(d,'')
         config['mounts'][d] = select([bottle.request.get_cookie(name), DEFAULTS['mounts'].get(d), 'file://%s' % d], [None, ''])
-    print('config =', config)
     return config
 #}}}
 #{{{ get_dirs
@@ -170,7 +175,6 @@ def query_to_recoll_string(q):
         qs += " date:%s/%s" % (q['after'], q['before'])
     if q['dir'] != '<all>':
         qs += " dir:\"%s\" " % q['dir']
-    print('q ->', q, qs)
     return qs
 #}}}
 #{{{ recoll_initsearch
@@ -184,7 +188,6 @@ def recoll_initsearch(q):
         qs = query_to_recoll_string(q)
         query.execute(qs, config['stem'], config['stemlang'])
     except Exception as e:
-        print('exc in query', e)
         pass
     return query
 #}}}
@@ -211,27 +214,28 @@ def recoll_search(q, dosnippets=True):
         config['perpage'] = nres
         q['page'] = 1
     offset = (q['page'] - 1) * config['perpage']
-
+    print("query:", q['query'], query.rowcount, file = sys.stderr)
     if query.rowcount > 0:
         if type(query.next) == int:
             query.next = offset
         else:
             query.scroll(offset, mode='absolute')
-    print('rows', query.rowcount)
     highlighter = HlMeths()
     for i in range(config['perpage']):
         try:
             doc = query.fetchone()
-            print('got doc')
         except:
-            print('got to end')
             break
+        if doc == None: break
+        dpath = doc.url.replace('file://', '')
+        dpath = dpath.encode('utf-8')
+        if not os.access(dpath, os.R_OK): continue
+
         d = {}
         for f in FIELDS:
             try:
                 v = getattr(doc, f)
             except:
-                print('exc getting',f,'in',doc)
                 v = None
             if v is not None:
                 d[f] = v.encode('utf-8')
@@ -244,6 +248,7 @@ def recoll_search(q, dosnippets=True):
             d['snippet'] = query.makedocabstract(doc, highlighter).encode('utf-8')
         results.append(d)
     tend = datetime.datetime.now()
+    log("query finished")
     return results, nres, tend - tstart
 #}}}
 #}}}
@@ -251,12 +256,14 @@ def recoll_search(q, dosnippets=True):
 #{{{ static
 @bottle.route('/static/:path#.+#')
 def server_static(path):
+    log("about to do /static/")
     return bottle.static_file(path, root='./static')
 #}}}
 #{{{ main
 @bottle.route('/')
 @bottle.view('main')
 def main():
+    log("about to do main")
     config = get_config()
     return { 'dirs': get_dirs(config['dirs'], config['dirdepth']),
             'query': get_query(), 'sorts': SORTS }
@@ -265,10 +272,13 @@ def main():
 @bottle.route('/results')
 @bottle.view('results')
 def results():
+    log("about to do results")
     config = get_config()
     query = get_query()
     qs = query_to_recoll_string(query)
+    log("about to query")
     res, nres, timer = recoll_search(query)
+    log("did query")
     if config['maxresults'] == 0:
         config['maxresults'] = nres
     if config['perpage'] == 0:
@@ -282,6 +292,7 @@ def results():
 #{{{ preview
 @bottle.route('/preview/<resnum:int>')
 def preview(resnum):
+    log("about to do preview")
     if not hasrclextract:
         return 'Sorry, needs recoll version 1.19 or later'
     query = get_query()
@@ -302,6 +313,7 @@ def preview(resnum):
 #{{{ download
 @bottle.route('/download/<resnum:int>')
 def edit(resnum):
+    log("about to do download")
     if not hasrclextract:
         return 'Sorry, needs recoll version 1.19 or later'
     query = get_query()
@@ -325,7 +337,7 @@ def edit(resnum):
         'attachment; filename="%s"' % os.path.basename(path).encode('utf-8')
     path = path.encode('utf-8')
     bottle.response.headers['Content-Length'] = os.stat(path).st_size
-    f = open(path, 'r')
+    f = open(path, 'rb')
     if pathismine:
         os.unlink(path)
     return f
@@ -333,6 +345,7 @@ def edit(resnum):
 #{{{ json
 @bottle.route('/json')
 def get_json():
+    log("about to do json")
     query = get_query()
     query['page'] = 0
     qs = query_to_recoll_string(query)
@@ -351,6 +364,7 @@ def get_json():
 #{{{ csv
 @bottle.route('/csv')
 def get_csv():
+    log("about to do csv")
     config = get_config()
     query = get_query()
     query['page'] = 0
@@ -373,10 +387,12 @@ def get_csv():
 @bottle.route('/settings')
 @bottle.view('settings')
 def settings():
+    log("about to do /settings")
     return get_config()
 
 @bottle.route('/set')
 def set():
+    log("about to do /set")
     config = get_config()
     for k, v in DEFAULTS.items():
         bottle.response.set_cookie(k, str(bottle.request.query.get(k)), max_age=3153600000, expires=315360000)
@@ -389,6 +405,7 @@ def set():
 @bottle.route('/osd.xml')
 @bottle.view('osd')
 def main():
+    log("about to do osd")
     #config = get_config()
     url = bottle.request.urlparts
     url = '%s://%s' % (url.scheme, url.netloc)

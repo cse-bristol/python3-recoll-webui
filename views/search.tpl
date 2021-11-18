@@ -5,7 +5,7 @@
 <table id="form">
 <tr>
     <td width="50%">
-        <b>Query</b>
+        <b>Query</b> <a style="margin-left:1em;" href="/static/help.html">ℹ Help</a>
         <input tabindex="0" type="search" name="query" value="{{query['query']}}" autofocus><br><br>
         <input type="submit" value="Search">&nbsp;
         <a href="./" tabindex="-1"><input type="button" value="Reset"></a>&nbsp;

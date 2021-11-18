@@ -20,3 +20,7 @@ function addOpenSearch()
     alert("Your browser does not support OpenSearch search plugins.");
   }
 }
+
+function hrefToClipboard(e) {
+  prompt("You can copy the path here:", e.href);
+}

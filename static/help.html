@@ -1,0 +1,61 @@
+<html>
+  <head>
+    <title>Search help</title>
+    <style type="text/css" media="screen">
+     * {
+         font-family: sans-serif;
+     }
+     h1 {
+         font-size:1.5em;
+     }
+     h2 {
+         font-size: 1.3em;
+     }
+     code {
+         font-family: monospace;
+         background:#eee;
+     }
+    </style>
+  </head>
+  <body>
+    <h1>What's this?</h1>
+    <p>
+      This is a simple search engine for the S-drive.
+      It's based on a program called <a href="https://www.lesbonscomptes.com/recoll/">recoll</a>.
+    </p>
+    <p>The search index is updated every day at midnight, so anything from the previous day should come up.</p>
+    <p>This also means that the index will contain things that have been deleted until the next day.</p>
+    <h1>Search syntax</h1>
+    <h2>Searching in files</h2>
+    <p>
+      If you write text in the box, it looks for documents containing those words, in any order.
+    </p>
+    <p>
+      If you put text in double quotes (<code>&quot;like this&quot;</code>) it looks for documents containing the quoted phrase.
+    </p>
+    <h2>Searching file names</h2>
+    <p>
+      If you include something like <code>ext:pdf</code> or <code>ext:docx</code> it restricts the results to PDF or Word files (or files that have the text as a suffix after a dot, really).
+    </p>
+    <p>
+      If you want to look for a file with something in the name, you can write <code>fn:stuff</code>.
+    </p>
+    <h2>Combining or excluding things</h2>
+    <p>
+      Search terms are all required to match the document by default.
+    </p>
+    <p>
+      You can ask an either/or question using <code>OR</code> (uppercase is important).
+      For example if you want either PDFs or word files containing the word validation, your query should be <code>validation (ext:pdf OR ext:docx)</code>
+    </p>
+    <p>
+      You can negate a term (require that it doesn't match) by prefixing it with a dash.
+      For example if you want to find any non-csv document containing the word candlestick, your query should be <code>candlestick -ext:csv</code>
+    </p>
+    <p>
+      A more detailed syntax guide is <a href="https://www.lesbonscomptes.com/recoll/usermanual/webhelp/docs/RCL.SEARCH.LANG.SYNTAX.html">here</a>.
+    </p>
+    <h1>Links to files</h1>
+    Unfortunately web browsers won't let you link to local files nowadays, do the links don't work.
+  </body>
+</html>

@@ -73,6 +73,9 @@ body {	margin: 0; font-family: sans-serif }
 	color: #444; clear: both;
 	font-family: serif;
 }
+summary {
+    cursor: pointer;
+}
 .search-result-url { clear:left; }
 .search-result-url a { color: #5a5; font-size: 8pt; float: left; margin-right: 1em;}
 .search-result-links { color: #aaf; font-size: 8pt; float: left; margin-right: 1em; visibility: hidden }
